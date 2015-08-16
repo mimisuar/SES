@@ -1,0 +1,4 @@
+Debug/
+SES/Debug/
+SASM/*
+!/SASM/*.lua

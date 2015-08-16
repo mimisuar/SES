@@ -1,0 +1,349 @@
+<html>
+	<!-- All by hand! MWAHAHAHAHA! -->
+
+	<head>
+		<title>SASM Programming Guide</title>
+		
+		<style>
+			table, th, td, tr 
+			{
+				border: 1px solid white;
+			}
+		</style>
+	</head>
+	
+	<body bgcolor="#000000" text="#FFFFFF">
+		<a name="top"></a>
+		<h1> SASM Programming Guide </h1>
+		
+		<a href="#syntax">1. Syntax</a> </br>
+		<a href="#storeload">2. Store/Load Instructions</a> </br>
+		<a href="#pushpop">3. Push/Pop Instructions</a> </br>
+		<a href="#branching">4. Branching Instructions</a> </br>
+		<a href="#math">5. Arithmetic & Bitwise Instructions</a> </br>
+		<a href="#flag">6. Flags Instructions</a> </br>
+		
+		<a name="syntax"></a>
+		<h2>1. Syntax <a href="#top">[Back to top]</a> </h2>
+		
+		<p> All instructions are written as: </br>
+		add #15 </br>
+		With 'add' being the instruction and '#15' being the argument.
+		
+		<p> There are 2 main value types: bytes and addresses. </br>
+		Byte are denoted by #'s. This is a byte: #15. This is memory address 0x0015: 15. Simple stuff. </br>
+		The number values can be prepended with % or $ to make it a binary or hexidecimal number, respectively. </br>
+		The value '%1111' gets turned into '15' at compile time.
+		
+		<p> Comments are denoted by semicolons. Any code after a semicolon is ignored. </p>
+		
+		<p> Procedures are define with the colon, like: </br>
+		procname:</br>
+		&nbsp;code, code, code... </br>
+		and can be called like: </br>
+		call procname </p>
+		
+		
+		<a name="storeload"></a>
+		<h2>2. Store/Load Instructions <a href="#top">[Back to top]</a> </h2>
+		
+		<table style="width:50%">
+			<tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			<tr>
+				<td>lda &lt;addr&gt;</td>
+				<td>Load the value stored at memory address &lt;addr&gt; into the accumulator.</td>
+				<td>0F</td>
+				
+				
+			</tr>
+			
+			<tr>
+				<td>lda &lt;byte&gt;</td>
+				<td>Load an immediate byte into the accumulator.</td>
+				<td>5F</td>
+			</tr>
+			
+			<tr>
+				<td>lda Z</td>
+				<td>Load the value in the Z-index into the accumulator.</td>
+				<td>7F</td>
+			</tr>
+			
+			<tr>
+				<td>ldz &lt;addr&gt;</td>
+				<td>Load the value stored at memory address &lt;addr&gt; into the z-index.</td>
+				<td>1F</td>
+			</tr>
+			
+			<tr>
+				<td>ldz &lt;byte&gt;</td>
+				<td>Load an immediate byte into the Z-index.</td>
+				<td>6F</td>
+			</tr>
+			
+			<tr>
+				<td>ldz A</td>
+				<td>Load the value in the accumulator into the Z-index.</td>
+				<td>8F</td>
+			</tr>
+			
+			<tr>
+				<td>sta &lt;addr&gt;</td>
+				<td>Store the value in the accumulator into memory address &lt;addr&gt;</td>
+				<td>2F</td>
+			</tr>
+			
+			<tr>
+				<td>stz &lt;addr&gt;</td>
+				<td>Store the value in the z-index into memory address &lt;addr&gt;</td>
+				<td>3F</td>
+			</tr>
+			
+			<tr>
+				<td>stf &lt;addr&gt;</td>
+				<td>Store the value in the status flag into the memory address &lt;addr&gt;</td>
+				<td>4F</td>
+		</table>
+		
+		<a name="pushpop"></a>
+		<h2>3. Push/Pop Instructions <a href="#top">[Back to top]</a> </h2>
+		
+		<p> The data stack can only have 16 values! Anymore crashes the system. </p>
+		
+		<table style="width:50%">
+			<tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			
+			<tr>
+				<td>push &lt;byte&gt;</td>
+				<td>Pushes an immediate &lt;byte&gt; onto the stack.</td>
+				<td>0A</td>
+			</tr>
+			
+			<tr>
+				<td>push &lt;addr&gt;</td>
+				<td>Pushes the value at memory address &lt;addr&gt; on the stack.</td>
+				<td>1A</td>
+			</tr>
+			
+			<tr>
+				<td>push A</td>
+				<td>Pushes the value in the accumulator onto the stack.</td>
+				<td>2A</td>
+			</tr>
+			
+			<tr>
+				<td>push Z</td>
+				<td>Pushes the value in the Z-index onto the stack.</td>
+				<td>3A</td>
+			</tr>
+			
+			<tr>
+				<td>push F</td>
+				<td>Pushes the value of the status flag onto the stack.</td>
+				<td>4A</td>
+			</tr>
+			
+			<tr>
+				<td>pop &lt;addr&gt;</td>
+				<td>Pops the top of the stack into memory address &lt;addr&gt;</td>
+				<td>0B</td>
+			</tr>
+			
+			<tr>
+				<td>pop A</td>
+				<td>Pops the top of the stack into the accumulator.</td>
+				<td>1B</td>
+			</tr>
+				
+			<tr>
+				<td>pop Z</td>
+				<td>Pops the top of the stack into the Z-index.</td>
+				<td>2B</td>
+			</tr>
+		</table>
+		
+		<a name="branching"></a>
+		<h2>4. Branching Instructions <a href="#top">[Back to top]</a> </h2>
+		
+		<table style="width:66%">
+			<tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			
+			<tr>
+				<td>call &lt;label&gt;</td>
+				<td>Calls the procedure &lt;label&gt;, moving the program counter to it's location in the program data.</td>
+				<td>10</td>
+			</tr>
+			
+			<tr>
+				<td>ret</td>
+				<td>Returns from a procedure.</td>
+				<td>00</td>
+			</tr>
+			
+			<tr>
+				<td>jmp &lt;addr&gt;</td>
+				<td>Jump to a different location in the code. Address can also be a label!</td>
+				<td>20</td>
+			</tr>
+			
+			<tr>
+				<td>cpa &lt;addr&gt;</td>
+				<td>Compare the accumulator to the value in a memory address.</td>
+				<td>30</td>
+			</tr>
+			
+			<tr>
+				<td>cpa &lt;byte&gt;</td>
+				<td>Compare the accumulator to an immediate byte.</td>
+				<td>40</td>
+			</tr>
+			
+			<tr>
+				<td>cpz &lt;addr&gt;</td>
+				<td>Compare the z-index to the value in a memory address.</td>
+				<td>50</td>
+			</tr>
+			
+			<tr>
+				<td>cpz &lt;byte&gt;</td>
+				<td>Compare the accumulator to immediate byte.</td>
+				<td>60</td>
+			</tr>
+			
+			<tr>
+				<td>beq &lt;addr&gt;</td>
+				<td>Jump to address if equal. Use cpa and cpz to test.</td>
+				<td>70</td>
+			</tr>
+			
+			<tr>
+				<td>bne &lt;addr&gt;</td>
+				<td>Jump to address if not equal. Use cpa and cpz to test.</td>
+				<td>80</td>
+			</tr>
+		</table>
+		
+		<a name="math"></a>
+		<h2>5. Arithmetic & Bitwise Instructions <a href="#top">[Back to top]</a> </h2>
+		
+		<p> All mathmatical operations are done to the accumulator and store on the accumulator. </p>
+		<p> The status flag maybe changed. </p>
+		
+		<table style="width:50%">
+			<tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			
+			<tr>
+				<td>add &lt;byte&gt;</td>
+				<td>Adds the immediate byte to the accumulator. If there is overflow, enable the overflow bit.</td>
+				<td>0C</td>
+			</tr>
+			
+			<tr>
+				<td>add Z</td>
+				<td>Adds the value in the Z-index to the accumulator. If there is overflow, enable the overflow bit.</td>
+				<td>2C</td>
+			</tr>
+			
+			<tr>
+				<td>sub &lt;byte&gt;</td>
+				<td>Subtracts the immediate byte from the accumulator. If there is underflow, enable the overflow bit.</td>
+				<td>1C</td>
+			</tr>
+			
+			<tr>
+				<td>sub Z</td>
+				<td>Subtracts the value in the Z-index from the accumulator. If there is underflow, enable the underflow bit.</td>
+				<td>3C</td>
+			</tr>
+		</table>
+		
+		<a name="flag"></a>
+		<h2>6. Flag Instructions</h2>
+		<p> These instructions modify the status flag </p>
+		<p> The flag looks like this: </br>
+		7      bit     0 </br>
+		----     ---- </br>
+		| | | |  | | | | </br>
+		| | | |  | | | +- Overflow flag: enabled on overflow and carry. </br>
+		| | | |  | | +-- Equal flag: If comparsion is equal, this is 1. </br>
+		| | | |  | +--- Greater-than flag: If comparison is greater than, this is 1. </br>
+		| | | |  +---- Less-than flag: If comarison is less than, this is 1. </br>
+		| | | +------ Empty flag </br>
+		| | +------- Empty flag </br>
+		| +-------- Empty flag </br>
+		+--------- Empty flag </br>
+		</br>
+		
+		<table style="width:50%">
+			<tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			
+			<tr>
+				<td>eof</td>
+				<td>Enable the overflow flag.</td>
+				<td>01</td>
+			</tr>
+			
+			<tr>
+				<td>eef</td>
+				<td>Enable the equal flag.</td>
+				<td>11</td>
+			</tr>
+			
+			<tr>
+				<td>egf</td>
+				<td>Enable the greater-than flag.</td>
+				<td>21</td>
+			</tr>
+			
+			<tr>
+				<td>elf</td>
+				<td>Enable the less-than flag.</td>
+				<td>31</td>
+			</tr>
+			
+			<tr>
+				<td>dof</td>
+				<td>Disable the overflow flag.</td>
+				<td>81</td>
+			</tr>
+			
+			<tr>
+				<td>def</td>
+				<td>Disable the equal flag.</td>
+				<td>91</td>
+			</tr>
+			
+			<tr>
+				<td>dgf</td>
+				<td>Disable the greater-than flag.</td>
+				<td>A1</td>
+			</tr>
+			
+			<tr>
+				<td>dlf</td>
+				<td>Disable the less-than flag.</td>
+				<td>B1</td>
+			</tr>
+		</table>
+	</body>
+</html>
