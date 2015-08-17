@@ -16,7 +16,7 @@ namespace SES
 
 		// Constants //
 		static const unsigned int MEMORY_SIZE = 0x1000;
-		static const word PRGROM_ADDRESS = 0x250;
+		static const word PRGROM_ADDRESS = 0x500;
 		static const byte FLAG_OVERFLOW = 1;
 		static const byte FLAG_EQUAL = 2;
 		static const byte FLAG_GREATER = 4;
@@ -25,7 +25,7 @@ namespace SES
 		static const byte FLAG_2 = 32;
 		static const byte FLAG_3 = 64;
 		static const byte FLAG_4 = 128;
-		static const word STACK_ADDRESS = 0x200;
+		static const word STACK_ADDRESS = 0x400;
 		// Opcodes //
 		// Store / Load //
 		static const byte OP_LDA_ADDR = 0x0F;
@@ -36,13 +36,11 @@ namespace SES
 		static const byte OP_LDZ_A = 0x8F;
 		static const byte OP_STA_ADDR = 0x2F;
 		static const byte OP_STZ_ADDR = 0x3F;
-		static const byte OP_STF_ADDR = 0x4F;
 		// Stack //
 		static const byte OP_PUSH_BYTE = 0x0A;
 		static const byte OP_PUSH_ADDR = 0x1A;
 		static const byte OP_PUSH_A = 0x2A;
 		static const byte OP_PUSH_Z = 0x3A;
-		static const byte OP_PUSH_F = 0x4A;
 		static const byte OP_POP_ADDR = 0x0B;
 		static const byte OP_POP_A = 0x1B;
 		static const byte OP_POP_Z = 0x2B;
@@ -50,11 +48,28 @@ namespace SES
 		static const byte OP_RET = 0x00;
 		static const byte OP_CALL = 0x10;
 		static const byte OP_JMP = 0x20;
+		static const byte OP_CPA_ADDR = 0x30;
+		static const byte OP_CPA_BYTE = 0x40;
+		static const byte OP_CPZ_ADDR = 0x50;
+		static const byte OP_CPZ_BYTE = 0x60;
+		static const byte OP_BEQ_ADDR = 0x70;
+		static const byte OP_BNE_ADDR = 0x80;
+		static const byte OP_BGT_ADDR = 0x90;
+		static const byte OP_BLT_ADDR = 0xA0;
 		// Math //
 		static const byte OP_ADD_BYTE = 0x0C;
 		static const byte OP_ADD_Z = 0x2C;
 		static const byte OP_SUB_BYTE = 0x1C;
 		static const byte OP_SUB_Z = 0x3C;
+		// Flag //
+		static const byte OP_EOF = 0x01;
+		static const byte OP_EEF = 0x11;
+		static const byte OP_EGF = 0x21;
+		static const byte OP_ELF = 0x31;
+		static const byte OP_DOF = 0x81;
+		static const byte OP_DEF = 0x91;
+		static const byte OP_DGF = 0xA1;
+		static const byte OP_DLF = 0xB1;
 		
 
 		void WriteByte(word address, byte value);
@@ -67,12 +82,13 @@ namespace SES
 		void FlagEnableBit(byte mask = 0xFF);
 		void FlagDisableBit(byte mask = 0xFF);
 		void FlagToggleBit(byte mask = 0xFF);
+		bool FlagIsEnabled(byte mask = 0xFF);
 	private:
 		byte m_ram[MEMORY_SIZE];
 		byte m_accumulator;
 		byte m_zindex;
 		byte m_datastack;
-		byte m_callstack[16];
+		word m_callstack[16];
 		byte m_statusflag;
 		word m_pc;
 		byte m_callsp;

@@ -32,7 +32,7 @@ namespace SES
 		// clear everything except for program data //
 		m_pc = PRGROM_ADDRESS;
 
-		for (word addr = 0; addr < PRGROM_ADDRESS; addr++)
+		for (word addr = PRGROM_ADDRESS; addr < MEMORY_SIZE; addr++)
 		{
 			m_ram[addr] = 0;
 		}
@@ -42,12 +42,19 @@ namespace SES
 
 	void CPU::WriteByte(word address, byte value)
 	{
-		m_ram[address] = value;
+		if (address >= 0 && address < MEMORY_SIZE)
+		{
+			m_ram[address] = value;
+		}
 	}
 
 	byte CPU::ReadByte(word address)
 	{
-		return m_ram[address];
+		if (address >= 0 && address < MEMORY_SIZE)
+		{
+			return m_ram[address];
+		}
+		return 0;
 	}
 
 	void CPU::Run()
@@ -108,12 +115,6 @@ namespace SES
 			m_pc++;
 			break;
 
-		case OP_STF_ADDR:
-			// Store the value of the status flag into a memory address //
-			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
-			this->WriteByte(addr, m_statusflag);
-			break;
-
 		case OP_PUSH_BYTE:
 			// Push an immediate byte onto the stack //
 			if (m_datastack <= 15)
@@ -162,15 +163,6 @@ namespace SES
 			}
 			break;
 
-		case OP_PUSH_F:
-			// Push the status flag onto the stack //
-			if (m_datastack <= 15)
-			{
-				this->WriteByte(STACK_ADDRESS + m_datastack, m_statusflag);
-				m_datastack++;
-			}
-			break;
-
 		case OP_POP_ADDR:
 			// Pop the top of the stack into a memory address //
 			if (m_datastack > 0)
@@ -207,10 +199,152 @@ namespace SES
 			m_pc++;
 			break;
 
+		case OP_CALL:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (m_callsp < 16)
+			{
+				m_callstack[m_callsp++] = m_pc;
+				m_pc = addr;
+			}
+			break;
+
+		case OP_RET:
+			if (m_callsp > 0)
+			{
+				m_pc = m_callstack[--m_callsp];
+				m_pc -= 2;
+			}
+			break;
+
 		case OP_JMP:
 			// Jump to a different location in the code //
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			m_pc = addr;
+			break;
+
+		case OP_CPA_ADDR:
+			// Compare the value in the accumulator with 
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			if (m_accumulator == this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_accumulator > this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_accumulator < this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
+		case OP_CPA_BYTE:
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			m_pc++;
+			if (m_accumulator == this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_accumulator > this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_accumulator < this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
+		case OP_CPZ_ADDR:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			if (m_zindex == this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_zindex > this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_zindex < this->ReadByte(addr))
+			{
+				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
+		case OP_CPZ_BYTE:
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			m_pc++;
+			if (m_zindex == this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_zindex > this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_zindex < this->ReadByte(m_pc))
+			{
+				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
+		case OP_BEQ_ADDR:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (FlagIsEnabled(FLAG_EQUAL))
+			{
+				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_BNE_ADDR:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (!FlagIsEnabled(FLAG_EQUAL))
+			{
+				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_BGT_ADDR:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (FlagIsEnabled(FLAG_GREATER))
+			{
+				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_BLT_ADDR:
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (FlagIsEnabled(FLAG_LESS))
+			{
+				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
 			break;
 
 		case OP_ADD_BYTE:
@@ -261,6 +395,58 @@ namespace SES
 
 			m_accumulator -= this->ReadByte(m_pc++);
 			break;
+
+		case OP_EOF:
+			// Enable overflow bit //
+			FlagEnableBit(FLAG_OVERFLOW);
+			m_pc++;
+			break;
+
+		case OP_EEF:
+			// Enable equal bit //
+			FlagEnableBit(FLAG_EQUAL);
+			m_pc++;
+			break;
+
+		case OP_EGF:
+			// Enable greater bit //
+			FlagEnableBit(FLAG_GREATER);
+			m_pc++;
+			break;
+
+		case OP_ELF:
+			// Enable less bit //
+			FlagEnableBit(FLAG_LESS);
+			m_pc++;
+			break;
+
+		case OP_DOF:
+			// Disable overflow bit //
+			FlagDisableBit(FLAG_OVERFLOW);
+			m_pc++;
+			break;
+
+		case OP_DEF:
+			// Disable equal bit //
+			FlagDisableBit(FLAG_EQUAL);
+			m_pc++;
+			break;
+
+		case OP_DGF:
+			// Disable greater bit //
+			FlagDisableBit(FLAG_GREATER);
+			m_pc++;
+			break;
+
+		case OP_DLF:
+			// Disable less bit //
+			FlagDisableBit(FLAG_LESS);
+			m_pc++;
+			break;
+
+		default:
+			std::cout << "Unknown opcode " << (int)opcode << "." << std::endl;
+			break;
 		}
 	}
 
@@ -300,5 +486,10 @@ namespace SES
 	void CPU::FlagToggleBit(byte mask)
 	{
 		m_statusflag ^= mask;
+	}
+
+	bool CPU::FlagIsEnabled(byte mask)
+	{
+		return ((m_statusflag & mask) == mask);
 	}
 }
