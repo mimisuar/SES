@@ -1,4 +1,8 @@
 Debug/
+Release/
 SES/Debug/
-SASM/*
-!/SASM/*.lua
+SES/Release/
+Graphics\ Compiler/Debug/
+Graphics\ Compiler/Release/
+utils/*
+!/utils/*.lua

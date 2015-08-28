@@ -22,6 +22,7 @@
 		<a href="#branching">4. Branching Instructions</a> </br>
 		<a href="#math">5. Arithmetic & Bitwise Instructions</a> </br>
 		<a href="#flag">6. Flags Instructions</a> </br>
+		<a href="file">7. File Instructions</a> </br>
 		
 		<a name="syntax"></a>
 		<h2>1. Syntax <a href="#top">[Back to top]</a> </h2>
@@ -283,6 +284,66 @@
 				<td>Subtracts the value in the Z-index from the accumulator. If there is underflow, enable the underflow bit.</td>
 				<td>3C</td>
 			</tr>
+			
+			<tr>
+				<td>lsh #&lt;byte&lt;</td>
+				<td>Left shift by &lt;byte&gt;.</td>
+				<td>4C</td>
+			</tr>
+			
+			<tr>
+				<td>lsh Z</td>
+				<td>Left shift by Z</td>
+				<td>AC</td>
+			</tr>
+			
+			<tr>
+				<td>rsh #&lt;byte&lt;</td>
+				<td>Right shift by &lt;byte&gt;.</td>
+				<td>5C</td>
+			</tr>
+			
+			<tr>
+				<td>rsh Z</td>
+				<td>Right shift by Z.</td>
+				<td>BC</td>
+			</tr>
+			
+			<tr>
+				<td>and #&lt;byte&gt;</td>
+				<td>Bit-wise and on the accumulator and &lt;byte&gt;.</td>
+				<td>7C</td>
+			</tr>
+			
+			<tr>
+				<td>and Z</td>
+				<td>Bit-wise and on the accumulator and Z.</td>
+				<td>DC</td>
+			</tr>
+			
+			<tr>
+				<td>or #&lt;byte&gt;</td>
+				<td>Bit-wise or on the accumulator and &lt;byte&gt;</td>
+				<td>8C</td>
+			</tr>
+			
+			<tr>
+				<td>or Z</td>
+				<td>Bit-wise or on the accumulator and Z.</td>
+				<td>EC</td>
+			</tr>
+			
+			<tr>
+				<td>xor #&lt;byte&gt;</td>
+				<td>Bit-wise xor on the accumulator and &lt;byte&gt;</td>
+				<td>9C</td>
+			</tr>
+			
+			<tr>
+				<td>xor Z</td>
+				<td>Bit-wise xor on the accumulator and Z.</td>
+				<td>FC</td>
+			</tr>
 		</table>
 		
 		<a name="flag"></a>
@@ -357,5 +418,26 @@
 				<td>B1</td>
 			</tr>
 		</table>
+		
+		<a name="file"></a>
+		<h2>7. File Instructions</h2>
+		<table style="width:50%">
+			 <tr>
+				<th>Instruction</th>
+				<th>Explanation</th>
+				<th>Opcode</th>
+			</tr>
+			
+			<tr>
+				<td>wra &lt;addr&gt;</td>
+				<td>Write the value in accumulator to the external file in address &lt;addr&gt;.</td>
+				<td>9F</td>
+			</tr>
+			
+			<tr>
+				<td>rda &lt;addr&gt;</td>
+				<td>Read from the external file in address &lt;addr&gt; and store it in the accumulator.</td>
+				<td>AF</td>
+			</tr>
 	</body>
 </html>

@@ -1,6 +1,8 @@
 #include "CPU.hpp"
 
 #include <iostream>
+#include <string>
+
 
 namespace SES
 {
@@ -8,10 +10,12 @@ namespace SES
 	{
 		m_accumulator = 0;
 		m_zindex = 0;
+		m_index = 0;
 		m_datastack = 0;
 		m_statusflag = 0;
 		m_pc = PRGROM_ADDRESS;
 		m_callsp = 0;
+		m_ememfile = "";
 
 		// Status Flag //
 		// bit 0 - overflow / underflow. If during math the value in the accumulator goes over or under 255 or 0. //
@@ -19,6 +23,11 @@ namespace SES
 		for (word addr = 0; addr < MEMORY_SIZE; addr++)
 		{
 			m_ram[addr] = 0;
+		}
+
+		for (word addr = 0; addr < EXTERNAL_MEMORY_SIZE; addr++)
+		{
+			m_emem[addr] = 0;
 		}
 	}
 
@@ -30,14 +39,15 @@ namespace SES
 	void CPU::Reset()
 	{
 		// clear everything except for program data //
+		this->SaveExternalMem();
 		m_pc = PRGROM_ADDRESS;
 
-		for (word addr = PRGROM_ADDRESS; addr < MEMORY_SIZE; addr++)
+		for (word addr = 0; addr < PRGROM_ADDRESS; addr++)
 		{
 			m_ram[addr] = 0;
 		}
 
-		
+
 	}
 
 	void CPU::WriteByte(word address, byte value)
@@ -57,6 +67,60 @@ namespace SES
 		return 0;
 	}
 
+	void CPU::PushStack(byte value)
+	{
+		if (m_datastack <= 15)
+		{
+			this->WriteByte(STACK_ADDRESS + m_datastack, value);
+			m_datastack++;
+		}
+	}
+
+	byte CPU::PopStack()
+	{
+		if (m_datastack > 0)
+		{
+			m_datastack--;
+			return this->ReadByte(STACK_ADDRESS + m_datastack);
+		}
+		return 0;
+	}
+
+	void CPU::InitExternalMem(const char* fname)
+	{
+		std::string str1, str2;
+		str1 = "emem/";
+		str2 = fname;
+		m_ememfile_str = (str1 + str2);
+		m_ememfile = m_ememfile_str.c_str();
+		
+
+		FILE* externalmem = fopen(m_ememfile, "r");
+		if (!externalmem)
+		{
+			std::cout << "Unable to read memory." << std::endl;
+		}
+		else
+		{
+			fread(m_emem, sizeof(byte), EXTERNAL_MEMORY_SIZE, externalmem);
+			fclose(externalmem);
+		}
+	}
+
+	void CPU::SaveExternalMem()
+	{
+		FILE* externalmem = fopen(m_ememfile, "w");
+		if (!externalmem)
+		{
+			std::cout << "Unable to write memory." << std::endl;
+		}
+		else
+		{
+			fwrite(m_emem, sizeof(byte), EXTERNAL_MEMORY_SIZE, externalmem);
+			fclose(externalmem);
+		}
+	}
+
 	void CPU::Run()
 	{
 		byte opcode = this->ReadByte(m_pc);
@@ -67,6 +131,7 @@ namespace SES
 		case OP_LDA_ADDR:
 			// Load the value at a memory address into the accumulator //
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			m_accumulator = this->ReadByte(addr);
 			m_pc++;
 			break;
 
@@ -79,6 +144,12 @@ namespace SES
 		case OP_LDA_Z:
 			// Load the value in the z-index into the accumulator //
 			m_accumulator = m_zindex;
+			m_pc++;
+			break;
+
+		case OP_LDA_I:
+			// Load the value at address I into the accumulator //
+			m_accumulator = this->ReadByte(m_index);
 			m_pc++;
 			break;
 
@@ -97,7 +168,17 @@ namespace SES
 
 		case OP_LDZ_A:
 			// Load the value in the accumulator into the z-index //
-			m_accumulator = m_zindex;
+			m_zindex = m_accumulator;
+			m_pc++;
+			break;
+
+		case OP_LDZ_I:
+			// Load the value at address I into the Z-index //
+			m_zindex = this->ReadByte(m_index);
+			break;
+
+		case OP_LDI_ADDR:
+			m_index = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			m_pc++;
 			break;
 
@@ -117,89 +198,62 @@ namespace SES
 
 		case OP_PUSH_BYTE:
 			// Push an immediate byte onto the stack //
-			if (m_datastack <= 15)
-			{
-				this->WriteByte(STACK_ADDRESS + m_datastack, this->ReadByte(++m_pc));
-				m_datastack++;
-			}
-			else
-			{
-				m_pc++;
-			}
+			this->PushStack(this->ReadByte(++m_pc));
 			m_pc++;
 			break;
 
 		case OP_PUSH_ADDR:
 			// Push a value from a memory address onto the stack //
-			if (m_datastack <= 15)
-			{
-				addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
-				this->WriteByte(STACK_ADDRESS + m_datastack, this->ReadByte(addr));
-				m_datastack++;
-			}
-			else
-			{
-				m_pc += 2;
-			}
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			this->PushStack(this->ReadByte(addr));
 			m_pc++;
 			break;
 
 		case OP_PUSH_A:
 			// Push the accumulator onto the stack //
-			if (m_datastack <= 15)
-			{
-				this->WriteByte(STACK_ADDRESS + m_datastack, m_accumulator);
-				m_datastack++;
-			}
+			this->PushStack(m_accumulator);
 			m_pc++;
 			break;
 
 		case OP_PUSH_Z:
 			// Push the Z-index onto the stack //
-			if (m_datastack <= 15)
-			{
-				this->WriteByte(STACK_ADDRESS + m_datastack, m_zindex);
-				m_datastack++;
-			}
+			this->PushStack(m_zindex);
+			m_pc++;
+			break;
+
+		case OP_PUSH_I:
+			// Push the value at address I onto the stack //
+			this->PushStack(this->ReadByte(m_index));
+			m_pc++;
 			break;
 
 		case OP_POP_ADDR:
 			// Pop the top of the stack into a memory address //
-			if (m_datastack > 0)
-			{
-				addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
-				m_datastack--;
-				this->WriteByte(addr, STACK_ADDRESS + m_datastack);
-			}
-			else
-			{
-				m_pc += 2;
-			}
-
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			this->WriteByte(addr, this->PopStack());
 			m_pc++;
 			break;
 
 		case OP_POP_A:
 			// Pop the top of the stack into the accumulator //
-			if (m_datastack > 0)
-			{
-				m_datastack--;
-				m_accumulator = this->ReadByte(STACK_ADDRESS + m_datastack);
-			}
+			m_accumulator = this->PopStack();
 			m_pc++;
 			break;
 
 		case OP_POP_Z:
 			// Pop the top of the stack into the Z-index //
-			if (m_datastack > 0)
-			{
-				m_datastack--;
-				m_zindex = this->ReadByte(STACK_ADDRESS + m_datastack);
-			}
+			m_zindex = this->PopStack();
+			m_pc++;
+			break;
+
+		case OP_POP_I:
+			// Pop the top of the stack into address I //
+			this->WriteByte(m_index, this->PopStack());
 			m_pc++;
 			break;
 
 		case OP_CALL:
+			// Call a sub-routine //
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			if (m_callsp < 16)
 			{
@@ -208,7 +262,17 @@ namespace SES
 			}
 			break;
 
+		case OP_CALL_I:
+			// Call a sub-routine at address I //
+			if (m_callsp < 16)
+			{
+				m_callstack[m_callsp++] = m_pc;
+				m_pc = m_index;
+			}
+			break;
+
 		case OP_RET:
+			// Return from a call //
 			if (m_callsp > 0)
 			{
 				m_pc = m_callstack[--m_callsp];
@@ -220,6 +284,11 @@ namespace SES
 			// Jump to a different location in the code //
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			m_pc = addr;
+			break;
+
+		case OP_JMP_I:
+			// Jump to a different location in the code //
+			m_pc = m_index;
 			break;
 
 		case OP_CPA_ADDR:
@@ -257,6 +326,24 @@ namespace SES
 			else if (m_accumulator < this->ReadByte(m_pc))
 			{
 				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
+		case OP_CPA_I:
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			if (m_accumulator == this->ReadByte(m_index))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_accumulator > this->ReadByte(m_index))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_accumulator < this->ReadByte(m_index))
+			{
+				FlagDisableBit(FLAG_LESS);
 			}
 			m_pc++;
 			break;
@@ -299,11 +386,41 @@ namespace SES
 			m_pc++;
 			break;
 
+		case OP_CPZ_I:
+			FlagDisableBit(FLAG_EQUAL | FLAG_GREATER | FLAG_LESS);
+
+			m_pc++;
+			if (m_zindex == this->ReadByte(m_index))
+			{
+				FlagEnableBit(FLAG_EQUAL);
+			}
+			else if (m_zindex > this->ReadByte(m_index))
+			{
+				FlagEnableBit(FLAG_GREATER);
+			}
+			else if (m_zindex < this->ReadByte(m_index))
+			{
+				FlagEnableBit(FLAG_LESS);
+			}
+			m_pc++;
+			break;
+
 		case OP_BEQ_ADDR:
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			if (FlagIsEnabled(FLAG_EQUAL))
 			{
 				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_BEQ_I:
+			if (FlagIsEnabled(FLAG_EQUAL))
+			{
+				m_pc = m_index;
 			}
 			else
 			{
@@ -323,11 +440,33 @@ namespace SES
 			}
 			break;
 
+		case OP_BNE_I:
+			if (!FlagIsEnabled(FLAG_EQUAL))
+			{
+				m_pc = m_index;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
 		case OP_BGT_ADDR:
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			if (FlagIsEnabled(FLAG_GREATER))
 			{
 				m_pc = addr;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_BGT_I:
+			if (FlagIsEnabled(FLAG_GREATER))
+			{
+				m_pc = m_index;
 			}
 			else
 			{
@@ -345,6 +484,27 @@ namespace SES
 			{
 				m_pc++;
 			}
+			break;
+
+		case OP_BLT_I:
+			if (FlagIsEnabled(FLAG_LESS))
+			{
+				m_pc = m_index;
+			}
+			else
+			{
+				m_pc++;
+			}
+			break;
+
+		case OP_POFF:
+			// Exit from running and power off the system //
+			FlagEnableBit(FLAG_POFF);
+			break;
+
+		case OP_RST:
+			// Reset the system //
+			FlagEnableBit(FLAG_RESET);
 			break;
 
 		case OP_ADD_BYTE:
@@ -396,6 +556,94 @@ namespace SES
 			m_accumulator -= this->ReadByte(m_pc++);
 			break;
 
+		case OP_LSH_BYTE:
+			// Left-shift by an immediate byte. //
+			m_accumulator <<= this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_LSH_Z:
+			// Left-shift by Z. //
+			m_accumulator <<= m_zindex;
+			m_pc++;
+			break;
+
+		case OP_RSH_BYTE:
+			// Right-shift by an immediate byte. //
+			m_accumulator >>= this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_RSH_Z:
+			// Right-shift by Z. //
+			m_accumulator >>= m_zindex;
+			m_pc++;
+			break;
+
+		case OP_AND_BYTE:
+			// Bitwise-and A and an immediate byte //
+			m_accumulator &= this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_AND_Z:
+			// Bitwise-and A and Z //
+			m_accumulator &= m_zindex;
+			m_pc++;
+			break;
+
+		case OP_OR_BYTE:
+			// Bitwise-or A and an immediate byte //
+			m_accumulator |= this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_OR_Z:
+			// Bitwise-or A and Z //
+			m_accumulator |= m_zindex;
+			m_pc++;
+			break;
+
+		case OP_XOR_BYTE:
+			// Bitwise-xor A and an immediate byte //
+			m_accumulator ^= this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_XOR_Z:
+			// Bitwise-xor A and Z //
+			m_accumulator ^= m_zindex;
+			m_pc++;
+			break;
+
+		case OP_ADI_ADDR:
+			// Add an address to index //
+			FlagDisableBit(FLAG_OVERFLOW);
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+
+			if (m_index + this->ReadByte(addr) > MEMORY_SIZE)
+			{
+				FlagEnableBit(FLAG_OVERFLOW);
+			}
+
+			m_index += addr;
+			m_pc++;
+			break;
+
+		case OP_SBI_ADDR:
+			// Add an address to index //
+			FlagDisableBit(FLAG_OVERFLOW);
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+
+			if (m_index - this->ReadByte(addr) < MEMORY_SIZE)
+			{
+				FlagEnableBit(FLAG_OVERFLOW);
+			}
+
+			m_index -= addr;
+			m_pc++;
+			break;
+
 		case OP_EOF:
 			// Enable overflow bit //
 			FlagEnableBit(FLAG_OVERFLOW);
@@ -444,14 +692,71 @@ namespace SES
 			m_pc++;
 			break;
 
+		case OP_WRA_ADDR:
+			// Write to external data //
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (addr < EXTERNAL_MEMORY_SIZE)
+			{
+				m_emem[addr] = m_accumulator;
+			}
+			else
+			{
+				std::cout << "External memory only has " << EXTERNAL_MEMORY_SIZE << " bytes." << std::endl;
+			}
+			m_pc++;
+			break;
+
+		case OP_RDA_ADDR:
+			// Read from external data //
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			if (addr < EXTERNAL_MEMORY_SIZE)
+			{
+				m_accumulator = m_emem[addr];
+			}
+			else
+			{
+				std::cout << "External memory only has " << EXTERNAL_MEMORY_SIZE << " bytes." << std::endl;
+			}
+			m_pc++;
+			break;
+
+		case OP_WRA_I:
+			// Write to external data //
+			if (m_index < EXTERNAL_MEMORY_SIZE)
+			{
+				m_emem[m_index] = m_accumulator;
+			}
+			else
+			{
+				std::cout << "External memory only has " << EXTERNAL_MEMORY_SIZE << " bytes." << std::endl;
+			}
+			m_pc++;
+			break;
+
+		case OP_RDA_I:
+			// Read from external data //
+			if (m_index < EXTERNAL_MEMORY_SIZE)
+			{
+				m_accumulator = m_emem[m_index];
+			}
+			else
+			{
+				std::cout << "External memory only has " << EXTERNAL_MEMORY_SIZE << " bytes." << std::endl;
+			}
+			m_pc++;
+			break;
+
 		default:
 			std::cout << "Unknown opcode " << (int)opcode << "." << std::endl;
+			m_pc++;
 			break;
 		}
 	}
 
 	bool CPU::LoadRom(const char* fname)
 	{
+		this->InitExternalMem(fname);
+
 		FILE* romfile = fopen(fname, "r");
 
 		if (!romfile)

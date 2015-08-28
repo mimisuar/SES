@@ -27,6 +27,9 @@
     <ClInclude Include="System.hpp">
       <Filter>Header Files\SES</Filter>
     </ClInclude>
+    <ClInclude Include="GPU.hpp">
+      <Filter>Header Files\SES</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -37,6 +40,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GPU.cpp">
+      <Filter>Source Files\SES</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
