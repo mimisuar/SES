@@ -1,17 +1,16 @@
 CPU Info:
 
-1000h (4096 bytes of ram)
+$1000 (4096 bytes of ram)
 
 Memory Map:
 
-0x0000 - 0x03FF	: Ram
-0x0400 - 0x040F	: Data Stack
-0x0410			: Keyboard (W, A, S, D, O, K, Enter/Return and Shift)
-0x041A - 0x041F	: Mouse (XYLRD)
-0x0420 - 0x042F	: GPU Stuff
-0x0430 - 0x043F	: APU Stuff
-0x0440 - 0x044F	: Call Stack
-0x0500 - 0x0FFF	: Prg Data 
+$000 - $3FF	: Ram
+$400 - $40F	: Data Stack
+$410			: Keyboard (W, A, S, D, O, K, Enter/Return and Shift)
+$411 - $413	: Mouse (XYLRD)
+$414 - $419	: GPU Stuff
+$420 - $43F	: APU Stuff
+$500 - $FFF	: Prg Data 
 
 [A]ccumulator - Used for math operations (byte)
 [Z]Register - Used for storing other numbers (byte)
@@ -30,3 +29,25 @@ O 		= $08
 K 		= $04
 Return 	= $02
 Shift	= $01
+
+Mouse Registers:
+MouseX 		= $411
+MouseY 		= $412
+MouseStatus = $413
+
+Mouse Values:
+Left 	= $01
+Right 	= $02
+Middle  = $04
+
+$414 = GPU Ctrl
+$415 = GPU Address (Upper)
+$416 = GPU Address (Lower)
+$417 = GPU Port
+
+GPU:
+$000 - $2FF: Sprites
+$300 - $5FF: Backgrounds
+$600 - $63F: Palettes
+$640 - $73F: Object Attriubte Memory
+$740 - $FFF: Background Table

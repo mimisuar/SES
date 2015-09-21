@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 
 	SES::System* sys = new SES::System;
 
-	if (!sys->LoadRom("helloworld-loop"))
+	if (!sys->LoadRom("graphics.ses"))
 	{
 		delete sys;
 		return EXIT_FAILURE;

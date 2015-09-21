@@ -55,6 +55,10 @@ namespace SES
 		if (address >= 0 && address < MEMORY_SIZE)
 		{
 			m_ram[address] = value;
+			if (address == GPU_PORT)
+			{
+				FlagEnableBit(FLAG_GPU);
+			}
 		}
 	}
 
@@ -125,7 +129,6 @@ namespace SES
 	{
 		byte opcode = this->ReadByte(m_pc);
 		word addr = 0;
-
 		switch (opcode)
 		{
 		case OP_LDA_ADDR:
@@ -178,7 +181,15 @@ namespace SES
 			break;
 
 		case OP_LDI_ADDR:
+			// Load the address into I //
 			m_index = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			m_pc++;
+			break;
+
+		case OP_LDI_IADDR:
+			// Load at the value at address addr into I //
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			m_index = (this->ReadByte(addr) << 8) | this->ReadByte(addr + 1);
 			m_pc++;
 			break;
 
@@ -193,6 +204,14 @@ namespace SES
 			// Store the value in the Z-index into a memory address //
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 			this->WriteByte(addr, m_zindex);
+			m_pc++;
+			break;
+
+		case OP_STI_ADDR:
+			// Store the value OF the index at address addr //
+			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
+			this->WriteByte(addr, m_index >> 8);
+			this->WriteByte(addr + 1, m_index & 0xFF);
 			m_pc++;
 			break;
 
@@ -260,6 +279,11 @@ namespace SES
 				m_callstack[m_callsp++] = m_pc;
 				m_pc = addr;
 			}
+			else
+			{
+				printf("Stack overflow error!");
+				FlagEnableBit(FLAG_POFF);
+			}
 			break;
 
 		case OP_CALL_I:
@@ -269,6 +293,11 @@ namespace SES
 				m_callstack[m_callsp++] = m_pc;
 				m_pc = m_index;
 			}
+			else
+			{
+				printf("Stack overflow error!");
+				FlagEnableBit(FLAG_POFF);
+			}
 			break;
 
 		case OP_RET:
@@ -276,7 +305,7 @@ namespace SES
 			if (m_callsp > 0)
 			{
 				m_pc = m_callstack[--m_callsp];
-				m_pc -= 2;
+				m_pc++;
 			}
 			break;
 
@@ -383,6 +412,7 @@ namespace SES
 			{
 				FlagEnableBit(FLAG_LESS);
 			}
+			
 			m_pc++;
 			break;
 
@@ -621,7 +651,7 @@ namespace SES
 			FlagDisableBit(FLAG_OVERFLOW);
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 
-			if (m_index + this->ReadByte(addr) > MEMORY_SIZE)
+			if (m_index + addr > MEMORY_SIZE)
 			{
 				FlagEnableBit(FLAG_OVERFLOW);
 			}
@@ -668,6 +698,12 @@ namespace SES
 			m_pc++;
 			break;
 
+		case OP_EGPUF:
+			// Enable GPU write bit //
+			FlagEnableBit(FLAG_GPU);
+			m_pc++;
+			break;
+
 		case OP_DOF:
 			// Disable overflow bit //
 			FlagDisableBit(FLAG_OVERFLOW);
@@ -689,6 +725,12 @@ namespace SES
 		case OP_DLF:
 			// Disable less bit //
 			FlagDisableBit(FLAG_LESS);
+			m_pc++;
+			break;
+
+		case OP_DGPUF:
+			// Disable GPU bit //
+			FlagDisableBit(FLAG_GPU);
 			m_pc++;
 			break;
 
@@ -757,23 +799,25 @@ namespace SES
 	{
 		this->InitExternalMem(fname);
 
-		FILE* romfile = fopen(fname, "r");
-
-		if (!romfile)
+		FILE* file;
+		if (fopen_s(&file, fname, "rb") != 0)
 		{
-			std::cout << "Unable to open file " << fname << "." << std::endl;
+			printf("Unable to open romfile %s.\n", fname);
 			return false;
 		}
 
-		int rombyte = fgetc(romfile);
-		int position = 0;
-
-		while (rombyte != EOF)
+		fseek(file, 0, SEEK_END);
+		int filesize = ftell(file);
+		rewind(file);
+		
+		char romcode;
+		for (int pos = 0; pos < filesize; pos++)
 		{
-			this->WriteByte(PRGROM_ADDRESS + position, rombyte);
-			position++;
-			rombyte = fgetc(romfile);
+			romcode = fgetc(file);
+			m_ram[PRGROM_ADDRESS + pos] = romcode;
 		}
+
+		fclose(file);
 
 		return true;
 	}

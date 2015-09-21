@@ -1,0 +1,47 @@
+; Graphics Example ;
+; By Miguel Suarez-Rodriguez ;
+; First we will need std.sasm ;
+jmp init
+
+@std.sasm
+
+init:
+	ldi GPU_PALETTES
+	sti GPU_ADDR
+	ldi sesmanPalette
+	ldz #4
+	call loadDataIntoGPU
+	
+	ldi GPU_SPRITES
+	sti GPU_ADDR
+	ldi sesmanSprite
+	ldz #64
+	call loadDataIntoGPU
+	
+	ldi GPU_OAM
+	sti GPU_ADDR
+	
+	lda #00				; set the X position of the sprite ;
+	sta GPU_PORT
+	lda #00				; set the Y position of the sprite ;
+	sta GPU_PORT
+	lda #SPR_ENABLE_BIT	; enable the sprite (to be drawn) ;
+	sta GPU_PORT
+	lda #00				; set the sprite id to 0 (the top-left corner of sesman) ;
+	sta GPU_PORT
+	 
+	lda #04
+	sta GPU_PORT
+	lda #00
+	sta GPU_PORT
+	lda #SPR_ENABLE_BIT
+	sta GPU_PORT
+	lda #01
+	sta GPU_PORT
+main:
+	jmp main
+
+sesmanPalette:
+	.db sesman.pal
+sesmanSprite:
+	.db sesman.spr

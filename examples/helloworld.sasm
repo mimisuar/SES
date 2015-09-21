@@ -1,0 +1,45 @@
+; Hello World ;
+; By Miguel Suarez ;
+
+; Here I define the two locations where I will store information about the index temporarily ;
+.def MSG 		$000
+.def WRITE 		$002
+.def KEYBOARD	$410
+.def RETURN		$02
+.def MOUSE		$413
+.def LEFT		$01
+
+main:
+	ldi helloWorld	; load the address of the message into index ;
+
+; there is our function that can read a string and write it out to the external file ;
+printMessage:
+	lda I							; read the letter at the current index ;
+	cpa #0							; compare it with the null character '\0' ;
+	beq waitForKeyboardInput		; if it is null we go to the exit procedure ;
+	adi $1							; go to the next letter ;
+	sti MSG							; store the index temporarily ;
+	ldi iWRITE						; now we read where we will write our letter to ;
+	wra I							; Now we actually write it ;
+	adi $1							; go to the next write location ;
+	sti WRITE						; save the write location ;
+	ldi iMSG						; reload our position in the message ;
+	jmp printMessage				; go back to the beginning ;
+
+helloWorld:
+	; this is the hex data of the string "Hello, World!\0" ;
+	.db 48 65 6C 6C 6F 2C 20 57 6F 72 6C 64 21 00
+	
+waitForKeyboardInput:
+	lda KEYBOARD				; get the current status of the keyboard ;
+	and #RETURN					; get the current status of the return key ;
+	cpa #RETURN					; Is the key down? ;
+	bne waitForMouseInput		; if not we go check the mouse ;
+	poff						; If so, we turn off the power ;
+	
+waitForMouseInput:
+	lda MOUSE					; get the current status of the mouse ;
+	and #LEFT					; get the current status of the left button ;
+	cpa #LEFT					; Is it down? ;
+	bne waitForKeyboardInput	; If not we go back and check the keyboard ;
+	poff						; turn off the power ;

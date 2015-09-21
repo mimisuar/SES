@@ -26,9 +26,10 @@ namespace SES
 		static const byte FLAG_LESS						= 8;
 		static const byte FLAG_RESET					= 16;
 		static const byte FLAG_POFF						= 32;
-		static const byte FLAG_3						= 64;
-		static const byte FLAG_4						= 128;
+		static const byte FLAG_GPU						= 64;
+		static const byte FLAG_APU						= 128;
 		static const word STACK_ADDRESS					= 0x400;
+		static const word GPU_PORT						= 0x417;
 		// Opcodes //
 		// Store / Load //
 		static const byte OP_LDA_ADDR	= 0x0F;
@@ -40,8 +41,10 @@ namespace SES
 		static const byte OP_LDZ_A		= 0x8F;
 		static const byte OP_LDZ_I		= 0x12;
 		static const byte OP_LDI_ADDR	= 0x4F;
+		static const byte OP_LDI_IADDR	= 0xCF;
 		static const byte OP_STA_ADDR	= 0x2F;
 		static const byte OP_STZ_ADDR	= 0x3F;
+		static const byte OP_STI_ADDR	= 0xBF;
 		// Stack //
 		static const byte OP_PUSH_BYTE	= 0x0A;
 		static const byte OP_PUSH_ADDR	= 0x1A;
@@ -96,10 +99,12 @@ namespace SES
 		static const byte OP_EEF		= 0x11;
 		static const byte OP_EGF		= 0x21;
 		static const byte OP_ELF		= 0x31;
+		static const byte OP_EGPUF		= 0x41;
 		static const byte OP_DOF		= 0x81;
 		static const byte OP_DEF		= 0x91;
 		static const byte OP_DGF		= 0xA1;
 		static const byte OP_DLF		= 0xB1;
+		static const byte OP_DGPUF		= 0xC1;
 		// File //
 		static const byte OP_WRA_ADDR	= 0x9F;
 		static const byte OP_RDA_ADDR	= 0xAF;

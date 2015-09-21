@@ -2,7 +2,9 @@ Debug/
 Release/
 SES/Debug/
 SES/Release/
-Graphics\ Compiler/Debug/
-Graphics\ Compiler/Release/
 utils/*
 !/utils/*.lua
+
+# Graphics Editor #
+Gfx\ Editor/bin/
+Gfx\ Editor/obj/

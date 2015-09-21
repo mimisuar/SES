@@ -1,0 +1,44 @@
+; Standard Definition File ;
+; By: Miguel Suarez-Rodriguez ;
+; To include this file in your project use: ;
+; @std.sasm ;
+; before any code :) ;
+
+.def GPU_ADDR 		$415 			; This is the address of the GPU upper and lower byte ports. SE ldi to load an address and then use sti with this value. ;
+.def GPU_PORT 		$417 			; The actual data being sent to the GPU ;
+.def GPU_PALETTES	$600
+.def GPU_SPRITES	$000
+.def GPU_OAM		$0
+
+.def KEYBOARD 		$410 			; This address contains the status of the keyboard ;
+.def KEY_W			$80				; You can check keyboard status by ANDing the keyboard value and the value of the key(s) ;
+.def KEY_A			$40				; you want to check. ;
+.def KEY_S			$20
+.def KEY_D			$10
+.def KEY_O			$08
+.def KEY_K			$04
+.def KEY_RETURN		$02
+.def KEY_SHIFT		$01
+
+.def MOUSE			$413			; this address contains the button status of the mouse ;
+.def MOUSE_X		$411
+.def MOUSE_Y		$412
+.def MB_LEFT		$01				; you can check the mouse the same way as the keyboard ;
+.def MB_RIGHT		$02
+.def MB_MIDDLE		$04
+
+.def SPR_ENABLE_BIT $80				; Use xor this with the sprite attribute byte to enable or disable it ;
+
+loadDataIntoGPU:
+	; set the GPU address to the location you want to write to ;
+	; Set index to the location of sprite on GPU ;
+	; Set Z to number of bytes to read ;
+	lda I					; Get the current byte ;
+	sta GPU_PORT			; Write it to the GPU ;
+	adi $1					; Move to the next byte ;
+	lda Z					; Load Z into A ;
+	sub #1					; Decrement ;
+	ldz A					; Load A into Z ;
+	cpz #0
+	bgt loadDataIntoGPU
+	ret

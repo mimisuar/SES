@@ -22,7 +22,7 @@ function main(input, output)
 	
 	file:write("#pragma once\n")
 	file:write("const unsigned int " .. codename .. "_SIZE = " .. #hexdata .. ";\n")
-	file:write("const char " .. codename .. "[" .. codename .. "_SIZE] = {\n")
+	file:write("const unsigned char " .. codename .. "[" .. codename .. "_SIZE] = {\n")
 	
 	local printed = 0
 	for i=1, #hexdata do

@@ -89,7 +89,9 @@ namespace SES
 						this->EnableKeyboard(KEYBOARD_SHIFT);
 						break;
 					}
+					break;
 
+					
 				case sf::Event::KeyReleased:
 					switch (e.key.code)
 					{
@@ -126,17 +128,71 @@ namespace SES
 						this->DisableKeyboard(KEYBOARD_SHIFT);
 						break;
 					}
+					
+					break;
+
+				case sf::Event::MouseButtonPressed:
+					switch (e.mouseButton.button)
+					{
+					case sf::Mouse::Left:
+						this->EnableMouse(MOUSE_LEFT);
+						break;
+
+					case sf::Mouse::Right:
+						this->EnableMouse(MOUSE_RIGHT);
+						break;
+
+					case sf::Mouse::Middle:
+						this->EnableMouse(MOUSE_MIDDLE);
+						break;
+					}
+					break;
+
+				case sf::Event::MouseButtonReleased:
+					switch (e.mouseButton.button)
+					{
+					case sf::Mouse::Left:
+						this->DisableMouse(MOUSE_LEFT);
+						break;
+
+					case sf::Mouse::Right:
+						this->DisableMouse(MOUSE_RIGHT);
+						break;
+
+					case sf::Mouse::Middle:
+						this->DisableMouse(MOUSE_MIDDLE);
+						break;
+					}
 					break;
 				}
 			}
 			m_cpu->WriteByte(KEYBOARD_ADDR, m_keyboard);
+			m_cpu->WriteByte(MOUSEX_ADDR, (byte)sf::Mouse::getPosition().x);
+			m_cpu->WriteByte(MOUSEY_ADDR, (byte)sf::Mouse::getPosition().y);
+			m_cpu->WriteByte(MOUSE_ADDR, m_mouse);
+
+			
 
 			// update the cpu //
 			m_cpu->Run();
 
-			m_screen->clear();
+			
+
+			if (m_cpu->FlagIsEnabled(CPU::FLAG_GPU))
+			{
+				// get the data from the port and write it to the appropriate address //
+				word address = (m_cpu->ReadByte(GPU_UPPER) << 8) | m_cpu->ReadByte(GPU_LOWER);
+				m_gpu->WriteByte(address, m_cpu->ReadByte(GPU_PORT));
+				address += (m_cpu->ReadByte(GPU_CTRL) & GPU::CTRL_INCVAL) + 1;
+				m_cpu->WriteByte(GPU_UPPER, address >> 8);
+				m_cpu->WriteByte(GPU_LOWER, address & 0xFF);
+				m_cpu->FlagDisableBit(CPU::FLAG_GPU);
+			}
 
 			// draw data from the gpu //
+			m_screen->clear();
+
+			m_screen->draw(m_gpu->Draw());
 
 			m_screen->display();
 
@@ -156,7 +212,6 @@ namespace SES
 
 	bool System::LoadRom(const char* fname)
 	{
-
 		return m_cpu->LoadRom(fname);
 	}
 
@@ -168,5 +223,15 @@ namespace SES
 	void System::EnableKeyboard(byte keyflag)
 	{
 		m_keyboard |= keyflag;
+	}
+
+	void System::DisableMouse(byte mouseflag)
+	{
+		m_mouse &= ~(mouseflag);
+	}
+
+	void System::EnableMouse(byte mouseflag)
+	{
+		m_mouse |= mouseflag;
 	}
 }
