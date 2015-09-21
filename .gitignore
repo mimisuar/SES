@@ -5,6 +5,8 @@ SES/Release/
 utils/*
 !/utils/*.lua
 
+examples/compiled/
+
 # Graphics Editor #
 Gfx\ Editor/bin/
 Gfx\ Editor/obj/
