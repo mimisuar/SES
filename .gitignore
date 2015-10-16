@@ -2,8 +2,7 @@ Debug/
 Release/
 SES/Debug/
 SES/Release/
-utils/*
-!/utils/*.lua
+utils/HexDen/
 
 examples/compiled/
 

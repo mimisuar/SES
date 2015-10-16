@@ -28,12 +28,6 @@ namespace SES
 		m_canvasTexture.create(256, 240);
 		
 		// initilize the sprite tiles //
-		for (int i = 0; i < SPRITES_TOTAL; i++)
-		{
-			m_sprites[i].image.create(8, 8);
-			m_sprites[i].texture.loadFromImage(m_sprites[i].image);
-			m_sprites[i].sprite.setTexture(m_sprites[i].texture);
-		}
 
 		unsigned int width = paletteImage.getSize().x, height = paletteImage.getSize().y;
 
@@ -91,6 +85,7 @@ namespace SES
 	{
 		return (source & mask) == mask;
 	}
+	
 	
 	sf::Color GPU::GetPaletteColor(byte paletteId, byte paletteNumber)
 	{
