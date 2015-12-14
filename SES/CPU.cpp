@@ -645,18 +645,46 @@ namespace SES
 			m_accumulator ^= m_zindex;
 			m_pc++;
 			break;
+			
+		case OP_ADI_BYTE:
+			// Add a byte to the index //
+			FlagDisableBit(FLAG_OVERFLOW);
+			
+			
+			if (m_index + this->ReadByte(++m_pc) > MEMORY_SIZE)
+			{
+				FlagEnableBit(FLAG_OVERFLOW);
+			}
+			
+			m_index += this->ReadByte(m_pc);
+			m_pc++;
+			
+			break;
 
 		case OP_ADI_ADDR:
 			// Add an address to index //
 			FlagDisableBit(FLAG_OVERFLOW);
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 
-			if (m_index + addr > MEMORY_SIZE)
+			if (m_index + this->ReadByte(addr) > MEMORY_SIZE)
 			{
 				FlagEnableBit(FLAG_OVERFLOW);
 			}
 
-			m_index += addr;
+			m_index += this->ReadByte(addr);
+			m_pc++;
+			break;
+			
+		case OP_SBI_BYTE:
+			// Subtract an byte from index //
+			FlagDisableBit(FLAG_OVERFLOW);
+			
+			if (m_index = this->ReadByte(++m_pc) < 0)
+			{
+				FlagEnableBit(FLAG_OVERFLOW);
+			}
+			
+			m_index -= this->ReadByte(m_pc);
 			m_pc++;
 			break;
 
@@ -665,12 +693,12 @@ namespace SES
 			FlagDisableBit(FLAG_OVERFLOW);
 			addr = (this->ReadByte(++m_pc) << 8) | this->ReadByte(++m_pc);
 
-			if (m_index - this->ReadByte(addr) < MEMORY_SIZE)
+			if (m_index - this->ReadByte(addr) < 0)
 			{
 				FlagEnableBit(FLAG_OVERFLOW);
 			}
 
-			m_index -= addr;
+			m_index -= this->ReadByte(addr);
 			m_pc++;
 			break;
 
