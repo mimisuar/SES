@@ -1,5 +1,5 @@
 ; Graphics Example ;
-; By Miguel Suarez-Rodriguez ;
+; By Miriam Suarez ;
 ; First we will need std.sasm ;
 jmp init
 

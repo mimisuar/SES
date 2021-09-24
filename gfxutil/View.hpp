@@ -11,7 +11,7 @@ void View(char* inputImage, char* inputPalette)
 	// read the palette //
 	if (fopen_s(&tmpFile, inputPalette, "rb") != 0)
 	{
-		printf("Unable to open image file %s.\n");
+		printf("Unable to open image file %s.\n", inputPalette);
 		return;
 	}
 
@@ -28,7 +28,7 @@ void View(char* inputImage, char* inputPalette)
 
 	if (fopen_s(&tmpFile, inputImage, "rb") != 0)
 	{
-		printf("Unable to open image file %.\n", inputImage);
+		printf("Unable to open image file %s.\n", inputImage);
 		return;
 	}
 
